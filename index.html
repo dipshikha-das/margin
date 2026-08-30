@@ -7,12 +7,13 @@
 <title>Margin — idea capture</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Margin">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400;500&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet">
 <style>
   :root {
     --paper:   #FAF6EF;
@@ -41,8 +42,18 @@
   .wrap { max-width: 640px; margin: 0 auto; padding: 0 20px; }
 
   /* ---------- header ---------- */
-  header { padding: 28px 0 10px; display: flex; align-items: baseline; justify-content: space-between; }
-  header h1 { font-weight: 500; font-size: 30px; letter-spacing: 0.01em; }
+  header { padding: 24px 0 10px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: baseline; gap: 2px; }
+  .brand .logo-m {
+    font-family: 'Mrs Saint Delafield', cursive;
+    font-size: 46px;
+    color: var(--margin);
+    line-height: 1;
+    transform: rotate(-4deg);
+    display: inline-block;
+    margin-right: -2px;
+  }
+  header h1 { font-weight: 500; font-size: 27px; letter-spacing: 0.01em; }
   header h1::after { content: "."; color: var(--margin); }
   header .date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--pencil); letter-spacing: 0.06em; }
 
@@ -205,7 +216,10 @@
 <div class="wrap">
 
   <header>
-    <h1>Margin</h1>
+    <div class="brand">
+      <span class="logo-m" aria-hidden="true">M</span>
+      <h1>argin</h1>
+    </div>
     <span class="date" id="today"></span>
   </header>
 
@@ -458,6 +472,14 @@ function buildPrompt(text) {
   return CONFIG.TAGS[currentTag].template.replaceAll("{idea}", text);
 }
 
+/* Tag filter state — declared here, ahead of renderLedger's first call below,
+   so it's initialized before anything can reference it. */
+let filterTag = null;
+function toggleFilter(tag) {
+  filterTag = filterTag === tag ? null : tag;
+  renderLedger();
+}
+
 function addEntry({ text, image, sent, agent }) {
   entries.unshift({
     id: Date.now(),
@@ -650,15 +672,6 @@ $("importBtn").onclick = () => {
   };
   inp.click();
 };
-
-/* =====================================================================
-   Tag filter — tap a #tag in the ledger to filter, tap again to clear
-   ===================================================================== */
-let filterTag = null;
-function toggleFilter(tag) {
-  filterTag = filterTag === tag ? null : tag;
-  renderLedger();
-}
 
 /* =====================================================================
    Incoming triggers:

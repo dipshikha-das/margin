@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#FAF6EF">
+<title>Margin — idea capture</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Margin">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:   #FAF6EF;
+    --paper-2: #F3EDE1;
+    --ink:     #2B2620;
+    --pencil:  #8A8175;
+    --rule:    #DDD5C6;
+    --margin:  #C1551B;   /* burnt orange — the margin rule + ink accent */
+    --margin-soft: #C1551B22;
+    --ok:      #4A6B4F;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+  .mono { font-family: 'DM Mono', ui-monospace, monospace; }
+
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- header ---------- */
+  header { padding: 28px 0 10px; display: flex; align-items: baseline; justify-content: space-between; }
+  header h1 { font-weight: 500; font-size: 30px; letter-spacing: 0.01em; }
+  header h1::after { content: "."; color: var(--margin); }
+  header .date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--pencil); letter-spacing: 0.06em; }
+
+  /* ---------- notebook page (signature element) ---------- */
+  .page {
+    position: relative;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
+    background-color: #FFFDF8;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 0 var(--rule), 0 8px 24px -18px rgba(43,38,32,.35);
+    overflow: hidden;
+  }
+  .page::before {           /* the margin rule */
+    content: "";
+    position: absolute; top: 0; bottom: 0; left: 44px;
+    width: 1.5px; background: var(--margin); opacity: .55;
+    pointer-events: none;
+  }
+  .page textarea {
+    display: block; width: 100%;
+    min-height: 128px;
+    padding: 7px 18px 8px 60px;
+    background: transparent; border: none; outline: none; resize: vertical;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 20px; line-height: 32px; color: var(--ink);
+  }
+  .page textarea::placeholder { color: var(--pencil); font-style: italic; opacity: .8; }
+
+  /* write (canvas) mode */
+  .page canvas {
+    display: block; width: 100%; height: 224px; touch-action: none; cursor: crosshair;
+  }
+  .canvas-tools {
+    position: absolute; right: 10px; top: 10px; display: flex; gap: 6px;
+  }
+  .canvas-tools button {
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .05em;
+    background: #FFFDF8; border: 1px solid var(--rule); border-radius: 6px;
+    color: var(--pencil); padding: 4px 9px; cursor: pointer;
+  }
+  .canvas-tools button:hover { color: var(--margin); border-color: var(--margin); }
+  .caption-row { border-top: 1px dashed var(--rule); }
+  .caption-row input {
+    width: 100%; border: none; outline: none; background: transparent;
+    padding: 10px 18px 10px 60px;
+    font-family: 'DM Mono', monospace; font-size: 14px; color: var(--ink);
+  }
+  .caption-row input::placeholder { color: var(--pencil); }
+
+  /* ---------- mode toggle ---------- */
+  .mode-row { display: flex; justify-content: flex-end; margin: 14px 0 8px; }
+  .mode {
+    display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden;
+    background: var(--paper-2);
+  }
+  .mode button {
+    font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: .08em;
+    padding: 6px 16px; border: none; background: transparent; color: var(--pencil); cursor: pointer;
+  }
+  .mode button.on { background: var(--ink); color: var(--paper); }
+
+  /* ---------- tags ---------- */
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 4px; }
+  .tag {
+    font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: .04em;
+    padding: 6px 14px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--rule); background: transparent; color: var(--pencil);
+    transition: all .12s ease;
+  }
+  .tag.on {
+    border-color: var(--margin); color: var(--margin); background: var(--margin-soft);
+  }
+  .tag-hint {
+    font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--pencil);
+    min-height: 18px; margin: 6px 2px 0; letter-spacing: .02em;
+  }
+
+  /* ---------- actions ---------- */
+  .actions { display: flex; gap: 10px; align-items: stretch; margin-top: 16px; }
+  .send {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--margin); color: #FFF9F2; border: none; border-radius: var(--radius);
+    font-family: 'EB Garamond', serif; font-size: 19px; font-weight: 500;
+    padding: 13px 18px; cursor: pointer;
+  }
+  .send:active { transform: translateY(1px); }
+  .send:disabled { opacity: .45; cursor: default; }
+  .send small { font-family: 'DM Mono', monospace; font-size: 11px; opacity: .85; letter-spacing: .05em; }
+  .log-only {
+    background: transparent; border: 1px solid var(--rule); border-radius: var(--radius);
+    color: var(--pencil); font-family: 'DM Mono', monospace; font-size: 12px;
+    padding: 0 16px; cursor: pointer; letter-spacing: .05em;
+  }
+  .log-only:hover { color: var(--ink); border-color: var(--pencil); }
+
+  select.agent {
+    appearance: none; -webkit-appearance: none;
+    background: transparent; border: none; color: inherit;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .05em;
+    text-decoration: underline dotted; cursor: pointer; padding: 0;
+  }
+  select.agent:focus { outline: none; }
+  select.agent option { color: var(--ink); }
+
+  /* ---------- ledger ---------- */
+  .ledger { margin-top: 44px; }
+  .ledger-head { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--ink); padding-bottom: 6px; }
+  .ledger-head h2 { font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+  .ledger-head button {
+    background: none; border: none; cursor: pointer; color: var(--pencil);
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .05em;
+  }
+  .ledger-head button:hover { color: var(--margin); }
+
+  .entry {
+    padding: 16px 0 14px; border-bottom: 1px dashed var(--rule);
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 12px;
+  }
+  .entry .meta {
+    grid-column: 1 / -1;
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--pencil);
+    letter-spacing: .05em; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .entry .meta .etag { color: var(--margin); }
+  .entry .text { font-size: 19px; }
+  .entry img { max-width: 100%; border: 1px solid var(--rule); border-radius: 6px; background: #FFFDF8; grid-column: 1 / -1; margin-top: 4px; }
+  .entry .ops { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .entry .ops button, .entry .ops a {
+    background: none; border: none; cursor: pointer; text-decoration: none;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .04em; color: var(--pencil);
+  }
+  .entry .ops button:hover, .entry .ops a:hover { color: var(--margin); }
+  .entry .ops a.chat { color: var(--ok); }
+  .empty {
+    padding: 36px 0; text-align: center; color: var(--pencil); font-style: italic;
+  }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(80px);
+    background: var(--ink); color: var(--paper); border-radius: 999px;
+    font-family: 'DM Mono', monospace; font-size: 12.5px; letter-spacing: .04em;
+    padding: 9px 20px; opacity: 0; transition: all .25s ease; pointer-events: none; z-index: 50;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+  @media (max-width: 460px) {
+    body { font-size: 17px; }
+    .page::before { left: 34px; }
+    .page textarea, .caption-row input { padding-left: 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Margin</h1>
+    <span class="date" id="today"></span>
+  </header>
+
+  <div class="mode-row">
+    <div class="mode" role="tablist" aria-label="Input mode">
+      <button id="modeType" class="on" role="tab" aria-selected="true">type</button>
+      <button id="modeWrite" role="tab" aria-selected="false">write</button>
+    </div>
+  </div>
+
+  <!-- the notebook page -->
+  <div class="page" id="page">
+    <textarea id="ideaText" rows="4" placeholder="try using pointcloud for matching…" autofocus></textarea>
+
+    <div id="writeArea" hidden>
+      <div class="canvas-tools">
+        <button id="undoStroke" title="Undo last stroke">undo</button>
+        <button id="clearCanvas" title="Clear the page">clear</button>
+      </div>
+      <canvas id="pad" aria-label="Handwriting area"></canvas>
+      <div class="caption-row">
+        <input id="caption" type="text" placeholder="one-line transcription (this is what gets sent)" />
+      </div>
+    </div>
+  </div>
+
+  <div class="tags" id="tags" role="radiogroup" aria-label="Tag"></div>
+  <div class="tag-hint" id="tagHint"></div>
+
+  <div class="actions">
+    <button class="send" id="send">
+      <span>Send to</span>
+      <select class="agent mono" id="agentSelect" onclick="event.stopPropagation()"></select>
+    </button>
+    <button class="log-only" id="logOnly" title="Save to the ledger without opening a chat">log only</button>
+  </div>
+
+  <!-- ledger -->
+  <section class="ledger">
+    <div class="ledger-head">
+      <h2>Ledger</h2>
+      <span>
+        <button id="importBtn" title="Load a ledger JSON from another device">import ↑</button>
+        <button id="exportBtn" title="Download the ledger as JSON">export ↓</button>
+      </span>
+    </div>
+    <div id="entries"></div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   CONFIG — edit here, everything else follows.
+   ===================================================================== */
+const CONFIG = {
+  // Deep-link templates. {q} is replaced with the URL-encoded prompt.
+  // Add/remove agents freely — the dropdown is built from this object.
+  AGENTS: {
+    "Claude (desktop app)": "claude://claude.ai/new?q={q}",
+    "Claude (web)":         "https://claude.ai/new?q={q}",
+    "ChatGPT":              "https://chatgpt.com/?q={q}",
+    "Perplexity":           "https://www.perplexity.ai/search?q={q}",
+  },
+  DEFAULT_AGENT: "Claude (desktop app)",
+
+  // Tag → starter-prompt template. {idea} is replaced with your note.
+  // The tag also travels inside the prompt so the chat is self-describing.
+  TAGS: {
+    "research": {
+      hint: "restate + 3 lines of inquiry + what to search first",
+      template:
+        "New research direction (tag: research): \"{idea}\"\n\n" +
+        "1. Restate this idea clearly in one paragraph.\n" +
+        "2. List 3 concrete lines of inquiry it opens.\n" +
+        "3. Suggest what to search or read first (papers, terms, methods).\n\n" +
+        "Keep it short — this is a starting point I'll come back to and continue."
+    },
+    "build": {
+      hint: "smallest testable version + rough steps",
+      template:
+        "New build idea (tag: build): \"{idea}\"\n\n" +
+        "1. Restate what I seem to want to make.\n" +
+        "2. Describe the smallest testable version.\n" +
+        "3. Rough steps and what to decide first.\n\n" +
+        "Short answer — I'll return to this chat to continue."
+    },
+    "read": {
+      hint: "context + where this fits + related material",
+      template:
+        "Reading note (tag: read): \"{idea}\"\n\n" +
+        "Give me brief context on this, where it fits in the field, and 2–3 related things worth reading. Short — I'll continue in this chat later."
+    },
+    "question": {
+      hint: "answer briefly + note what's uncertain",
+      template:
+        "Open question (tag: question): \"{idea}\"\n\n" +
+        "Answer briefly, note what's genuinely uncertain or debated, and stop there. I'll dig in later in this chat."
+    },
+  },
+  DEFAULT_TAG: "research",
+
+  STORAGE_KEY: "margin.ledger.v1",
+  AGENT_KEY:   "margin.agent.v1",
+};
+
+/* =====================================================================
+   State + storage
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+let entries = [];
+try { entries = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || "[]"); } catch (e) { entries = []; }
+const saveEntries = () => localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(entries));
+
+let currentTag  = CONFIG.DEFAULT_TAG;
+let currentMode = "type"; // "type" | "write"
+
+/* =====================================================================
+   Header date
+   ===================================================================== */
+$("today").textContent = new Date().toLocaleDateString(undefined,
+  { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+
+/* =====================================================================
+   Tags
+   ===================================================================== */
+const tagsEl = $("tags");
+Object.keys(CONFIG.TAGS).forEach(name => {
+  const b = document.createElement("button");
+  b.className = "tag" + (name === currentTag ? " on" : "");
+  b.textContent = "#" + name;
+  b.setAttribute("role", "radio");
+  b.setAttribute("aria-checked", name === currentTag);
+  b.onclick = () => {
+    currentTag = name;
+    [...tagsEl.children].forEach(c => {
+      const on = c.textContent === "#" + name;
+      c.classList.toggle("on", on);
+      c.setAttribute("aria-checked", on);
+    });
+    $("tagHint").textContent = "→ " + CONFIG.TAGS[name].hint;
+  };
+  tagsEl.appendChild(b);
+});
+$("tagHint").textContent = "→ " + CONFIG.TAGS[currentTag].hint;
+
+/* =====================================================================
+   Agent select
+   ===================================================================== */
+const agentSelect = $("agentSelect");
+Object.keys(CONFIG.AGENTS).forEach(name => {
+  const o = document.createElement("option");
+  o.value = name; o.textContent = name;
+  agentSelect.appendChild(o);
+});
+agentSelect.value = localStorage.getItem(CONFIG.AGENT_KEY) || CONFIG.DEFAULT_AGENT;
+agentSelect.onchange = () => localStorage.setItem(CONFIG.AGENT_KEY, agentSelect.value);
+
+/* =====================================================================
+   Mode toggle
+   ===================================================================== */
+function setMode(m) {
+  currentMode = m;
+  const typing = m === "type";
+  $("modeType").classList.toggle("on", typing);
+  $("modeWrite").classList.toggle("on", !typing);
+  $("modeType").setAttribute("aria-selected", typing);
+  $("modeWrite").setAttribute("aria-selected", !typing);
+  $("ideaText").hidden = !typing;
+  $("writeArea").hidden = typing;
+  if (!typing) sizeCanvas();
+}
+$("modeType").onclick  = () => setMode("type");
+$("modeWrite").onclick = () => setMode("write");
+
+/* =====================================================================
+   Canvas (write mode) — burnt-orange ink, stroke undo
+   ===================================================================== */
+const pad = $("pad");
+const ctx = pad.getContext("2d");
+let strokes = [], stroke = null, drawing = false;
+
+function sizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = pad.clientWidth, h = pad.clientHeight;
+  if (!w) return;
+  pad.width = w * dpr; pad.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redraw();
+}
+function redraw() {
+  ctx.clearRect(0, 0, pad.clientWidth, pad.clientHeight);
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
+  ctx.lineWidth = 2.2;
+  for (const s of strokes) {
+    ctx.beginPath();
+    s.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    ctx.stroke();
+  }
+}
+function pos(e) {
+  const r = pad.getBoundingClientRect();
+  return [e.clientX - r.left, e.clientY - r.top];
+}
+pad.addEventListener("pointerdown", e => {
+  drawing = true; stroke = [pos(e)]; strokes.push(stroke);
+  pad.setPointerCapture(e.pointerId);
+});
+pad.addEventListener("pointermove", e => {
+  if (!drawing) return;
+  stroke.push(pos(e)); redraw();
+});
+const stop = () => { drawing = false; stroke = null; };
+pad.addEventListener("pointerup", stop);
+pad.addEventListener("pointercancel", stop);
+$("undoStroke").onclick  = () => { strokes.pop(); redraw(); };
+$("clearCanvas").onclick = () => { strokes = []; redraw(); };
+window.addEventListener("resize", () => { if (currentMode === "write") sizeCanvas(); });
+
+/* =====================================================================
+   Capture → prompt → deep link → ledger
+   ===================================================================== */
+function getIdea() {
+  if (currentMode === "type") {
+    return { text: $("ideaText").value.trim(), image: null };
+  }
+  const text = $("caption").value.trim();
+  const image = strokes.length ? sketchThumb() : null;
+  return { text, image };
+}
+
+/* Downscale the sketch before storing — localStorage is ~5MB total,
+   full-resolution PNGs would exhaust it within a few dozen sketches. */
+function sketchThumb(maxW = 480) {
+  const scale = Math.min(1, maxW / pad.clientWidth);
+  const c = document.createElement("canvas");
+  c.width = pad.clientWidth * scale;
+  c.height = pad.clientHeight * scale;
+  const g = c.getContext("2d");
+  g.fillStyle = "#FFFDF8";
+  g.fillRect(0, 0, c.width, c.height);
+  g.drawImage(pad, 0, 0, c.width, c.height);
+  return c.toDataURL("image/png");
+}
+
+function buildPrompt(text) {
+  return CONFIG.TAGS[currentTag].template.replaceAll("{idea}", text);
+}
+
+function addEntry({ text, image, sent, agent }) {
+  entries.unshift({
+    id: Date.now(),
+    ts: new Date().toISOString(),
+    tag: currentTag,
+    text, image,
+    agent: sent ? agent : null,
+    chatUrl: null,
+  });
+  saveEntries();
+  renderLedger();
+}
+
+function clearInputs() {
+  $("ideaText").value = "";
+  $("caption").value = "";
+  strokes = []; redraw();
+}
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+$("send").onclick = () => {
+  const { text, image } = getIdea();
+  if (!text) {
+    toast(currentMode === "write"
+      ? "add a one-line transcription first — that's what the agent receives"
+      : "write something first");
+    return;
+  }
+  const agent = agentSelect.value;
+  const url = CONFIG.AGENTS[agent].replaceAll("{q}", encodeURIComponent(buildPrompt(text)));
+  addEntry({ text, image, sent: true, agent });
+  clearInputs();
+  window.open(url, "_blank");
+  toast("logged · opening " + agent + " — press enter there to start the chat");
+};
+
+$("logOnly").onclick = () => {
+  const { text, image } = getIdea();
+  if (!text && !image) { toast("nothing to log yet"); return; }
+  addEntry({ text: text || "(sketch)", image, sent: false, agent: null });
+  clearInputs();
+  toast("logged to the ledger");
+};
+
+/* =====================================================================
+   Ledger rendering
+   ===================================================================== */
+function renderLedger() {
+  const box = $("entries");
+  box.innerHTML = "";
+  if (!entries.length) {
+    box.innerHTML = '<div class="empty">Nothing yet. The first idea starts the ledger.</div>';
+    return;
+  }
+  if (filterTag) {
+    const f = document.createElement("div");
+    f.className = "meta";
+    f.style.padding = "10px 0 0";
+    f.style.fontFamily = "'DM Mono', monospace";
+    f.style.fontSize = "11px";
+    f.style.color = "var(--pencil)";
+    f.innerHTML = `showing <span style="color:var(--margin)">#${filterTag}</span> — `;
+    const clear = document.createElement("button");
+    clear.textContent = "clear ×";
+    clear.style.cssText = "background:none;border:none;cursor:pointer;color:var(--pencil);font:inherit;";
+    clear.onclick = () => toggleFilter(filterTag);
+    f.appendChild(clear);
+    box.appendChild(f);
+  }
+  for (const e of entries.filter(e => !filterTag || e.tag === filterTag)) {
+    const d = document.createElement("div");
+    d.className = "entry";
+
+    const when = new Date(e.ts).toLocaleString(undefined,
+      { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.innerHTML = `<span>${when}</span>`;
+    const tagBtn = document.createElement("button");
+    tagBtn.className = "etag";
+    tagBtn.textContent = "#" + e.tag;
+    tagBtn.style.cssText = "background:none;border:none;cursor:pointer;font:inherit;color:var(--margin);padding:0;letter-spacing:inherit;";
+    tagBtn.title = "Filter the ledger by this tag";
+    tagBtn.onclick = () => toggleFilter(e.tag);
+    meta.appendChild(tagBtn);
+    const sentTo = document.createElement("span");
+    sentTo.textContent = e.agent ? "→ " + e.agent : "not sent";
+    meta.appendChild(sentTo);
+    d.appendChild(meta);
+
+    const txt = document.createElement("div");
+    txt.className = "text";
+    txt.textContent = e.text;
+    d.appendChild(txt);
+
+    const ops = document.createElement("div");
+    ops.className = "ops";
+
+    if (e.chatUrl) {
+      const a = document.createElement("a");
+      a.className = "chat"; a.href = e.chatUrl; a.target = "_blank";
+      a.textContent = "open chat ↗";
+      ops.appendChild(a);
+    } else {
+      const link = document.createElement("button");
+      link.textContent = "attach chat link";
+      link.onclick = () => {
+        const u = prompt("Paste the chat URL for this idea:");
+        if (u) { e.chatUrl = u.trim(); saveEntries(); renderLedger(); }
+      };
+      ops.appendChild(link);
+    }
+
+    const resend = document.createElement("button");
+    resend.textContent = "send again";
+    resend.onclick = () => {
+      const tmpl = CONFIG.TAGS[e.tag] ? CONFIG.TAGS[e.tag].template : "{idea}";
+      const url = CONFIG.AGENTS[agentSelect.value]
+        .replaceAll("{q}", encodeURIComponent(tmpl.replaceAll("{idea}", e.text)));
+      window.open(url, "_blank");
+    };
+    ops.appendChild(resend);
+
+    const share = document.createElement("button");
+    share.textContent = "share ↗";
+    share.onclick = async () => {
+      const payload = `#${e.tag} — ${e.text}` + (e.chatUrl ? `\n${e.chatUrl}` : "");
+      if (navigator.share) {
+        try { await navigator.share({ title: "Margin idea", text: payload }); } catch (err) { /* user cancelled */ }
+      } else {
+        await navigator.clipboard.writeText(payload);
+        toast("copied — paste it anywhere");
+      }
+    };
+    ops.appendChild(share);
+
+    const del = document.createElement("button");
+    del.textContent = "remove";
+    del.onclick = () => {
+      entries = entries.filter(x => x.id !== e.id);
+      saveEntries(); renderLedger();
+    };
+    ops.appendChild(del);
+
+    d.appendChild(ops);
+
+    if (e.image) {
+      const img = document.createElement("img");
+      img.src = e.image; img.alt = "handwritten note";
+      d.appendChild(img);
+    }
+    box.appendChild(d);
+  }
+}
+renderLedger();
+
+/* =====================================================================
+   Export
+   ===================================================================== */
+$("exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "margin-ledger.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+$("importBtn").onclick = () => {
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "application/json";
+  inp.onchange = async () => {
+    try {
+      const data = JSON.parse(await inp.files[0].text());
+      if (!Array.isArray(data)) throw new Error("not a ledger file");
+      const ids = new Set(entries.map(e => e.id));
+      const added = data.filter(e => e && e.id && !ids.has(e.id));
+      entries = [...added, ...entries].sort((a, b) => b.id - a.id);
+      saveEntries(); renderLedger();
+      toast(`imported ${added.length} entr${added.length === 1 ? "y" : "ies"}`);
+    } catch (err) {
+      toast("couldn't read that file — export a ledger JSON first");
+    }
+  };
+  inp.click();
+};
+
+/* =====================================================================
+   Tag filter — tap a #tag in the ledger to filter, tap again to clear
+   ===================================================================== */
+let filterTag = null;
+function toggleFilter(tag) {
+  filterTag = filterTag === tag ? null : tag;
+  renderLedger();
+}
+
+/* =====================================================================
+   Incoming triggers:
+   - PWA share target (Android share sheet → Margin)
+   - ?idea= param, so shortcuts/bookmarklets/other apps can prefill Margin
+   ===================================================================== */
+(function acceptIncoming() {
+  const p = new URLSearchParams(location.search);
+  const incoming = [p.get("idea"), p.get("text"), p.get("title"), p.get("url")]
+    .filter(Boolean).join(" ").trim();
+  if (incoming) {
+    $("ideaText").value = incoming;
+    setMode("type");
+    history.replaceState(null, "", location.pathname); // don't re-fill on refresh
+    toast("captured from share — pick a tag and send");
+  }
+})();
+
+/* =====================================================================
+   Service worker — offline shell + installability
+   ===================================================================== */
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+/* Cmd/Ctrl+Enter sends */
+document.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") $("send").click();
+});
+</script>
+</body>
+</html>

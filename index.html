@@ -55,7 +55,15 @@
   }
   header h1 { font-weight: 500; font-size: 27px; letter-spacing: 0.01em; }
   header h1::after { content: "."; color: var(--margin); }
-  header .date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--pencil); letter-spacing: 0.06em; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--pencil); letter-spacing: 0.06em; }
+  .menu-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid var(--rule); background: transparent; color: var(--pencil);
+    font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .menu-btn:hover { color: var(--margin); border-color: var(--margin); }
 
   /* ---------- notebook page (signature element) ---------- */
   .page {
@@ -76,7 +84,7 @@
   }
   .page textarea {
     display: block; width: 100%;
-    min-height: 128px;
+    min-height: 260px;
     padding: 7px 18px 8px 60px;
     background: transparent; border: none; outline: none; resize: vertical;
     font-family: 'EB Garamond', Georgia, serif;
@@ -84,17 +92,27 @@
   }
   .page textarea::placeholder { color: var(--pencil); font-style: italic; opacity: .8; }
 
+  .text-tools { display: flex; justify-content: flex-end; gap: 6px; padding: 10px 10px 0; }
+  .text-tools button {
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .04em;
+    background: #FFFDF8; border: 1px solid var(--rule); border-radius: 6px;
+    color: var(--pencil); padding: 4px 9px; cursor: pointer;
+  }
+  .text-tools button:hover { color: var(--margin); border-color: var(--margin); }
+  .text-tools button.on { color: var(--margin); border-color: var(--margin); background: var(--margin-soft); }
+
   /* write (canvas) mode */
   .page canvas {
     display: block; width: 100%; height: 224px; touch-action: none; cursor: crosshair;
   }
   .canvas-tools {
-    position: absolute; right: 10px; top: 10px; display: flex; gap: 6px;
+    position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; z-index: 2;
   }
   .canvas-tools button {
-    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .05em;
-    background: #FFFDF8; border: 1px solid var(--rule); border-radius: 6px;
-    color: var(--pencil); padding: 4px 9px; cursor: pointer;
+    font-size: 16px; line-height: 1;
+    background: #FFFDF8; border: 1px solid var(--rule); border-radius: 8px;
+    color: var(--pencil); width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
   .canvas-tools button:hover { color: var(--margin); border-color: var(--margin); }
   .caption-row { border-top: 1px dashed var(--rule); }
@@ -160,15 +178,52 @@
   select.agent:focus { outline: none; }
   select.agent option { color: var(--ink); }
 
-  /* ---------- ledger ---------- */
-  .ledger { margin-top: 44px; }
+  /* ---------- recent (main-page preview) ---------- */
+  .recent { margin-top: 40px; }
+  .recent-head { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--ink); padding-bottom: 6px; }
+  .recent-head h2 { font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+  .recent-head button {
+    background: none; border: none; cursor: pointer; color: var(--pencil);
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .05em;
+  }
+  .recent-head button:hover { color: var(--margin); }
+  .recent-item { padding: 12px 2px; border-bottom: 1px dashed var(--rule); cursor: pointer; }
+  .recent-item .meta {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--pencil);
+    display: flex; gap: 10px; letter-spacing: .05em;
+  }
+  .recent-item .meta .etag { color: var(--margin); }
+  .recent-item .recent-text {
+    font-size: 17px; margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .recent-item:hover .recent-text { color: var(--margin); }
+
+  /* ---------- ledger drawer (full history) ---------- */
+  .drawer-backdrop {
+    position: fixed; inset: 0; background: rgba(43,38,32,.45);
+    display: flex; justify-content: flex-end; z-index: 100;
+  }
+  .drawer-backdrop[hidden] { display: none; }
+  .drawer {
+    background: var(--paper); width: min(440px, 92vw); height: 100%;
+    overflow-y: auto; padding: 20px 20px 40px;
+    border-left: 1px solid var(--rule);
+    box-shadow: -8px 0 24px -12px rgba(43,38,32,.35);
+  }
   .ledger-head { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--ink); padding-bottom: 6px; }
   .ledger-head h2 { font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; font-family: 'DM Mono', monospace; }
   .ledger-head button {
     background: none; border: none; cursor: pointer; color: var(--pencil);
-    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .05em;
+    font-size: 16px; width: 28px; height: 28px;
   }
   .ledger-head button:hover { color: var(--margin); }
+  .ledger-actions { display: flex; justify-content: flex-end; gap: 12px; margin: 14px 0 4px; }
+  .ledger-actions button {
+    background: none; border: none; cursor: pointer; color: var(--pencil);
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .05em;
+  }
+  .ledger-actions button:hover { color: var(--margin); }
 
   .entry {
     padding: 16px 0 14px; border-bottom: 1px dashed var(--rule);
@@ -209,6 +264,10 @@
     body { font-size: 17px; }
     .page::before { left: 34px; }
     .page textarea, .caption-row input { padding-left: 48px; }
+    .mode-row { justify-content: stretch; }
+    .mode { flex: 1; display: flex; }
+    .mode button { flex: 1; padding: 10px 0; font-size: 13px; }
+    .drawer { width: 100%; }
   }
 </style>
 </head>
@@ -220,24 +279,30 @@
       <span class="logo-m" aria-hidden="true">M</span>
       <h1>argin</h1>
     </div>
-    <span class="date" id="today"></span>
+    <div class="header-right">
+      <span class="date" id="today"></span>
+      <button id="menuBtn" class="menu-btn" aria-label="Open full ledger" title="Full ledger">☰</button>
+    </div>
   </header>
 
   <div class="mode-row">
     <div class="mode" role="tablist" aria-label="Input mode">
-      <button id="modeType" class="on" role="tab" aria-selected="true">type</button>
-      <button id="modeWrite" role="tab" aria-selected="false">write</button>
+      <button id="modeType" class="on" role="tab" aria-selected="true">⌨ type</button>
+      <button id="modeWrite" role="tab" aria-selected="false">✎ write</button>
     </div>
   </div>
 
   <!-- the notebook page -->
   <div class="page" id="page">
-    <textarea id="ideaText" rows="4" placeholder="try using pointcloud for matching…" autofocus></textarea>
+    <div class="text-tools" id="textTools">
+      <button id="bulletBtn" title="Toggle bullet points on the current line(s)" aria-label="Toggle bullet points">• bullets</button>
+    </div>
+    <textarea id="ideaText" rows="9" placeholder="jot your notes here…" autofocus></textarea>
 
     <div id="writeArea" hidden>
       <div class="canvas-tools">
-        <button id="undoStroke" title="Undo last stroke">undo</button>
-        <button id="clearCanvas" title="Clear the page">clear</button>
+        <button id="undoStroke" title="Undo last stroke" aria-label="Undo last stroke">↺</button>
+        <button id="clearCanvas" title="Clear the page" aria-label="Clear the page">✕</button>
       </div>
       <canvas id="pad" aria-label="Handwriting area"></canvas>
       <div class="caption-row">
@@ -257,18 +322,30 @@
     <button class="log-only" id="logOnly" title="Save to the ledger without opening a chat">log only</button>
   </div>
 
-  <!-- ledger -->
-  <section class="ledger">
-    <div class="ledger-head">
-      <h2>Ledger</h2>
-      <span>
-        <button id="importBtn" title="Load a ledger JSON from another device">import ↑</button>
-        <button id="exportBtn" title="Download the ledger as JSON">export ↓</button>
-      </span>
+  <!-- recent (top 3, full ledger lives in the drawer) -->
+  <section class="recent">
+    <div class="recent-head">
+      <h2>Recent</h2>
+      <button id="viewAllBtn">view all →</button>
     </div>
-    <div id="entries"></div>
+    <div id="recentEntries"></div>
   </section>
 
+</div>
+
+<!-- full ledger drawer -->
+<div class="drawer-backdrop" id="drawerBackdrop" hidden>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Full ledger">
+    <div class="ledger-head">
+      <h2>Ledger</h2>
+      <button id="drawerClose" aria-label="Close">✕</button>
+    </div>
+    <div class="ledger-actions">
+      <button id="importBtn" title="Load a ledger JSON from another device">import ↑</button>
+      <button id="exportBtn" title="Download the ledger as JSON">export ↓</button>
+    </div>
+    <div id="entries"></div>
+  </aside>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -349,24 +426,28 @@ $("today").textContent = new Date().toLocaleDateString(undefined,
    Tags
    ===================================================================== */
 const tagsEl = $("tags");
-Object.keys(CONFIG.TAGS).forEach(name => {
-  const b = document.createElement("button");
-  b.className = "tag" + (name === currentTag ? " on" : "");
-  b.textContent = "#" + name;
-  b.setAttribute("role", "radio");
-  b.setAttribute("aria-checked", name === currentTag);
-  b.onclick = () => {
-    currentTag = name;
-    [...tagsEl.children].forEach(c => {
-      const on = c.textContent === "#" + name;
-      c.classList.toggle("on", on);
-      c.setAttribute("aria-checked", on);
-    });
-    $("tagHint").textContent = "→ " + CONFIG.TAGS[name].hint;
-  };
-  tagsEl.appendChild(b);
-});
-$("tagHint").textContent = "→ " + CONFIG.TAGS[currentTag].hint;
+function buildTagChips() {
+  tagsEl.innerHTML = "";
+  Object.keys(CONFIG.TAGS).forEach(name => {
+    const b = document.createElement("button");
+    b.className = "tag" + (name === currentTag ? " on" : "");
+    b.textContent = "#" + name;
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", name === currentTag);
+    b.onclick = () => {
+      currentTag = name;
+      [...tagsEl.children].forEach(c => {
+        const on = c.textContent === "#" + name;
+        c.classList.toggle("on", on);
+        c.setAttribute("aria-checked", on);
+      });
+      $("tagHint").textContent = "→ " + CONFIG.TAGS[name].hint;
+    };
+    tagsEl.appendChild(b);
+  });
+  $("tagHint").textContent = "→ " + CONFIG.TAGS[currentTag].hint;
+}
+buildTagChips();
 
 /* =====================================================================
    Agent select
@@ -391,11 +472,48 @@ function setMode(m) {
   $("modeType").setAttribute("aria-selected", typing);
   $("modeWrite").setAttribute("aria-selected", !typing);
   $("ideaText").hidden = !typing;
+  $("textTools").hidden = !typing;
   $("writeArea").hidden = typing;
   if (!typing) sizeCanvas();
 }
 $("modeType").onclick  = () => setMode("type");
 $("modeWrite").onclick = () => setMode("write");
+
+/* =====================================================================
+   Bullet points (type mode) — toggles "• " on the current line,
+   or every line touched by the selection.
+   ===================================================================== */
+$("bulletBtn").onclick = () => {
+  const ta = $("ideaText");
+  const value = ta.value;
+  const selStart = ta.selectionStart, selEnd = ta.selectionEnd;
+
+  let lineStart = value.lastIndexOf("\n", selStart - 1) + 1;
+  let lineEnd = value.indexOf("\n", selEnd);
+  if (lineEnd === -1) lineEnd = value.length;
+
+  const block = value.slice(lineStart, lineEnd);
+  const lines = block.split("\n");
+  const bulleted = lines.filter(l => l.trim() !== "");
+  const allBulleted = bulleted.length > 0 && bulleted.every(l => l.startsWith("• "));
+
+  let firstLineDelta = 0;
+  const newLines = lines.map((l, i) => {
+    if (l.trim() === "") return l;
+    if (allBulleted) {
+      if (i === 0) firstLineDelta = -2;
+      return l.startsWith("• ") ? l.slice(2) : l;
+    }
+    if (i === 0) firstLineDelta = 2;
+    return l.startsWith("• ") ? l : "• " + l;
+  });
+  const newBlock = newLines.join("\n");
+
+  ta.value = value.slice(0, lineStart) + newBlock + value.slice(lineEnd);
+  const delta = newBlock.length - block.length;
+  ta.focus();
+  ta.setSelectionRange(Math.max(lineStart, selStart + firstLineDelta), selEnd + delta);
+};
 
 /* =====================================================================
    Canvas (write mode) — burnt-orange ink, stroke undo
@@ -530,9 +648,54 @@ $("logOnly").onclick = () => {
 };
 
 /* =====================================================================
-   Ledger rendering
+   Ledger rendering — "Recent" (top 3, on the main page) + the full
+   ledger, which lives in the slide-in drawer.
    ===================================================================== */
+function renderRecent() {
+  const box = $("recentEntries");
+  box.innerHTML = "";
+  if (!entries.length) {
+    box.innerHTML = '<div class="empty">Nothing yet. The first idea starts the ledger.</div>';
+    return;
+  }
+  entries.slice(0, 3).forEach(e => {
+    const item = document.createElement("div");
+    item.className = "recent-item";
+    item.onclick = openDrawer;
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const when = new Date(e.ts).toLocaleString(undefined,
+      { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    const whenSpan = document.createElement("span");
+    whenSpan.textContent = when;
+    const tagSpan = document.createElement("span");
+    tagSpan.className = "etag";
+    tagSpan.textContent = "#" + e.tag;
+    meta.appendChild(whenSpan);
+    meta.appendChild(tagSpan);
+    item.appendChild(meta);
+
+    const txt = document.createElement("div");
+    txt.className = "recent-text";
+    txt.textContent = e.text || "(sketch)";
+    item.appendChild(txt);
+
+    box.appendChild(item);
+  });
+}
+
+const drawerBackdrop = $("drawerBackdrop");
+function openDrawer() { drawerBackdrop.hidden = false; }
+function closeDrawer() { drawerBackdrop.hidden = true; }
+$("menuBtn").onclick = openDrawer;
+$("viewAllBtn").onclick = openDrawer;
+$("drawerClose").onclick = closeDrawer;
+drawerBackdrop.addEventListener("click", e => { if (e.target === drawerBackdrop) closeDrawer(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !drawerBackdrop.hidden) closeDrawer(); });
+
 function renderLedger() {
+  renderRecent();
   const box = $("entries");
   box.innerHTML = "";
   if (!entries.length) {

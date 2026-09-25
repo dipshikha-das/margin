@@ -91,8 +91,10 @@
     font-size: 20px; line-height: 32px; color: var(--ink);
   }
   .page textarea::placeholder { color: var(--pencil); font-style: italic; opacity: .8; }
+  .page textarea[hidden] { display: none; }
 
   .text-tools { display: flex; justify-content: flex-end; gap: 6px; padding: 10px 10px 0; }
+  .text-tools[hidden] { display: none; }
   .text-tools button {
     font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .04em;
     background: #FFFDF8; border: 1px solid var(--rule); border-radius: 6px;
@@ -102,12 +104,15 @@
   .text-tools button.on { color: var(--margin); border-color: var(--margin); background: var(--margin-soft); }
 
   /* write (canvas) mode */
+  .write-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px 0; }
+  .write-label {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--pencil); letter-spacing: .02em;
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .page canvas {
-    display: block; width: 100%; height: 224px; touch-action: none; cursor: crosshair;
+    display: block; width: 100%; height: 260px; touch-action: none; cursor: crosshair;
   }
-  .canvas-tools {
-    position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; z-index: 2;
-  }
+  .canvas-tools { display: flex; gap: 6px; flex-shrink: 0; }
   .canvas-tools button {
     font-size: 16px; line-height: 1;
     background: #FFFDF8; border: 1px solid var(--rule); border-radius: 8px;
@@ -300,9 +305,12 @@
     <textarea id="ideaText" rows="9" placeholder="jot your notes here…" autofocus></textarea>
 
     <div id="writeArea" hidden>
-      <div class="canvas-tools">
-        <button id="undoStroke" title="Undo last stroke" aria-label="Undo last stroke">↺</button>
-        <button id="clearCanvas" title="Clear the page" aria-label="Clear the page">✕</button>
+      <div class="write-tools">
+        <span class="write-label">sketch — saved as an image, caption below is what's sent</span>
+        <div class="canvas-tools">
+          <button id="undoStroke" title="Undo last stroke" aria-label="Undo last stroke">↺</button>
+          <button id="clearCanvas" title="Clear the page" aria-label="Clear the page">✕</button>
+        </div>
       </div>
       <canvas id="pad" aria-label="Handwriting area"></canvas>
       <div class="caption-row">

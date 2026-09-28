@@ -104,16 +104,23 @@
   .text-tools button:hover { color: var(--margin); border-color: var(--margin); }
   .text-tools button.on { color: var(--margin); border-color: var(--margin); background: var(--margin-soft); }
 
-  /* write (canvas) mode */
-  .write-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px 0; }
-  .write-label {
-    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--pencil); letter-spacing: .02em;
-    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  /* write (canvas) mode — caption on top (ruled paper, matches type mode),
+     sketch below on a plain white pad so the two are visually distinct. */
+  .caption-row { border-bottom: 1px dashed var(--rule); }
+  .caption-row input {
+    width: 100%; border: none; outline: none; background: transparent;
+    padding: 10px 18px 10px 60px;
+    font-family: 'DM Mono', monospace; font-size: 14px; color: var(--ink);
   }
+  .caption-row input::placeholder { color: var(--pencil); }
+  .canvas-wrap { position: relative; }
   .page canvas {
     display: block; width: 100%; height: 260px; touch-action: none; cursor: crosshair;
+    background: #FFFFFF;
   }
-  .canvas-tools { display: flex; gap: 6px; flex-shrink: 0; }
+  .canvas-tools {
+    position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; z-index: 2;
+  }
   .canvas-tools button {
     font-size: 16px; line-height: 1;
     background: #FFFDF8; border: 1px solid var(--rule); border-radius: 8px;
@@ -121,13 +128,6 @@
     display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
   .canvas-tools button:hover { color: var(--margin); border-color: var(--margin); }
-  .caption-row { border-top: 1px dashed var(--rule); }
-  .caption-row input {
-    width: 100%; border: none; outline: none; background: transparent;
-    padding: 10px 18px 10px 60px;
-    font-family: 'DM Mono', monospace; font-size: 14px; color: var(--ink);
-  }
-  .caption-row input::placeholder { color: var(--pencil); }
 
   /* ---------- mode toggle ---------- */
   .mode-row { display: flex; justify-content: flex-end; margin: 14px 0 8px; }
@@ -251,6 +251,25 @@
   .entry .meta .etag { color: var(--margin); }
   .entry .text { font-size: 19px; }
   .entry img { max-width: 100%; border: 1px solid var(--rule); border-radius: 6px; background: #FFFDF8; grid-column: 1 / -1; margin-top: 4px; }
+  .entry .edit-form { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; }
+  .entry .edit-form textarea {
+    width: 100%; min-height: 80px; padding: 9px 12px; border: 1px solid var(--rule); border-radius: 8px;
+    font-family: 'EB Garamond', Georgia, serif; font-size: 17px; line-height: 1.5; color: var(--ink);
+    background: #FFFDF8; resize: vertical; outline: none;
+  }
+  .entry .edit-form textarea:focus { border-color: var(--margin); }
+  .entry .edit-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .entry .edit-row select {
+    font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; background: var(--paper-2); cursor: pointer;
+  }
+  .entry .edit-row button {
+    font-family: 'DM Mono', monospace; font-size: 11.5px; letter-spacing: .04em; cursor: pointer;
+    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--rule); background: transparent; color: var(--pencil);
+  }
+  .entry .edit-row button.save { background: var(--margin); border-color: var(--margin); color: #FFF9F2; }
+  .entry .edit-row button.save:hover { opacity: .9; }
+  .entry .edit-row button.cancel:hover { color: var(--ink); border-color: var(--pencil); }
   .entry .ops { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
   .entry .ops button, .entry .ops a {
     background: none; border: none; cursor: pointer; text-decoration: none;
@@ -271,6 +290,23 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  .update-banner {
+    position: sticky; top: 0; z-index: 60;
+    display: flex; align-items: center; gap: 12px;
+    background: var(--margin); color: #FFF9F2;
+    padding: 10px 16px; font-family: 'DM Mono', monospace; font-size: 12.5px; letter-spacing: .02em;
+  }
+  .update-banner[hidden] { display: none; }
+  .update-banner .msg { flex: 1; line-height: 1.4; }
+  .update-banner button {
+    font-family: 'DM Mono', monospace; font-size: 11.5px; letter-spacing: .04em; cursor: pointer;
+    border-radius: 6px; padding: 6px 12px; white-space: nowrap;
+  }
+  .update-banner .refresh { background: #FFF9F2; border: 1px solid #FFF9F2; color: var(--margin); }
+  .update-banner .refresh:hover { opacity: .9; }
+  .update-banner .dismiss { background: none; border: none; color: #FFF9F2; opacity: .8; padding: 6px 4px; }
+  .update-banner .dismiss:hover { opacity: 1; }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
@@ -287,6 +323,12 @@
 </head>
 <body>
 <div class="wrap">
+
+  <div class="update-banner" id="updateBanner" hidden role="status">
+    <span class="msg" id="updateBannerMsg"></span>
+    <button class="refresh" id="updateRefresh">refresh</button>
+    <button class="dismiss" id="updateDismiss" aria-label="dismiss">✕</button>
+  </div>
 
   <header>
     <div class="brand">
@@ -314,21 +356,20 @@
     <textarea id="ideaText" rows="9" placeholder="jot your notes here…" autofocus></textarea>
 
     <div id="writeArea" hidden>
-      <div class="write-tools">
-        <span class="write-label">sketch — saved as an image, caption below is what's sent</span>
+      <div class="caption-row">
+        <input id="caption" type="text" placeholder="one-line transcription (this is what gets sent)" />
+      </div>
+      <div class="canvas-wrap">
         <div class="canvas-tools">
           <button id="undoStroke" title="Undo last stroke" aria-label="Undo last stroke">↺</button>
           <button id="clearCanvas" title="Clear the page" aria-label="Clear the page">✕</button>
         </div>
-      </div>
-      <canvas id="pad" aria-label="Handwriting area"></canvas>
-      <div class="caption-row">
-        <input id="caption" type="text" placeholder="one-line transcription (this is what gets sent)" />
+        <canvas id="pad" aria-label="Handwriting area"></canvas>
       </div>
     </div>
   </div>
 
-  <div class="tags" id="tags" role="radiogroup" aria-label="Tag"></div>
+  <div class="tags" id="tags" role="group" aria-label="Tag (optional — click again to clear)"></div>
   <div class="tag-hint" id="tagHint"></div>
 
   <div class="actions">
@@ -449,14 +490,13 @@ function buildTagChips() {
     const b = document.createElement("button");
     b.className = "tag" + (name === currentTag ? " on" : "");
     b.textContent = "#" + name;
-    b.setAttribute("role", "radio");
-    b.setAttribute("aria-checked", name === currentTag);
+    b.setAttribute("aria-pressed", name === currentTag);
     b.onclick = () => {
       currentTag = (currentTag === name) ? null : name;
       [...tagsEl.children].forEach(c => {
         const on = currentTag !== null && c.textContent === "#" + currentTag;
         c.classList.toggle("on", on);
-        c.setAttribute("aria-checked", on);
+        c.setAttribute("aria-pressed", on);
       });
       $("tagHint").textContent = currentTag
         ? "→ " + CONFIG.TAGS[currentTag].hint
@@ -612,9 +652,10 @@ function buildPrompt(text) {
   return CONFIG.TAGS[currentTag].template.replaceAll("{idea}", text);
 }
 
-/* Tag filter state — declared here, ahead of renderLedger's first call below,
-   so it's initialized before anything can reference it. */
+/* Tag filter + in-place edit state — declared here, ahead of renderLedger's
+   first call below, so they're initialized before anything can reference them. */
 let filterTag = null;
+let editingId = null;
 function toggleFilter(tag) {
   filterTag = filterTag === tag ? null : tag;
   renderLedger();
@@ -767,61 +808,111 @@ function renderLedger() {
     meta.appendChild(sentTo);
     d.appendChild(meta);
 
-    const txt = document.createElement("div");
-    txt.className = "text";
-    txt.textContent = e.text;
-    d.appendChild(txt);
+    if (editingId === e.id) {
+      const form = document.createElement("div");
+      form.className = "edit-form";
 
-    const ops = document.createElement("div");
-    ops.className = "ops";
+      const ta = document.createElement("textarea");
+      ta.value = e.text;
+      form.appendChild(ta);
 
-    if (e.chatUrl) {
-      const a = document.createElement("a");
-      a.className = "chat"; a.href = e.chatUrl; a.target = "_blank";
-      a.textContent = "open chat ↗";
-      ops.appendChild(a);
-    } else {
-      const link = document.createElement("button");
-      link.textContent = "attach chat link";
-      link.onclick = () => {
-        const u = prompt("Paste the chat URL for this idea:");
-        if (u) { e.chatUrl = u.trim(); saveEntries(); renderLedger(); }
+      const row = document.createElement("div");
+      row.className = "edit-row";
+
+      const tagSelect = document.createElement("select");
+      const noneOpt = document.createElement("option");
+      noneOpt.value = ""; noneOpt.textContent = "(no tag)";
+      tagSelect.appendChild(noneOpt);
+      Object.keys(CONFIG.TAGS).forEach(name => {
+        const o = document.createElement("option");
+        o.value = name; o.textContent = "#" + name;
+        tagSelect.appendChild(o);
+      });
+      tagSelect.value = e.tag || "";
+      row.appendChild(tagSelect);
+
+      const save = document.createElement("button");
+      save.className = "save"; save.textContent = "save";
+      save.onclick = () => {
+        const newText = ta.value.trim();
+        if (!newText && !e.image) { toast("can't save an empty note"); return; }
+        e.text = newText || "(sketch)";
+        e.tag = tagSelect.value || null;
+        saveEntries();
+        editingId = null;
+        renderLedger();
       };
-      ops.appendChild(link);
-    }
+      row.appendChild(save);
 
-    const resend = document.createElement("button");
-    resend.textContent = "send again";
-    resend.onclick = () => {
-      const tmpl = CONFIG.TAGS[e.tag] ? CONFIG.TAGS[e.tag].template : "{idea}";
-      const url = CONFIG.AGENTS[agentSelect.value]
-        .replaceAll("{q}", encodeURIComponent(tmpl.replaceAll("{idea}", e.text)));
-      window.open(url, "_blank");
-    };
-    ops.appendChild(resend);
+      const cancel = document.createElement("button");
+      cancel.className = "cancel"; cancel.textContent = "cancel";
+      cancel.onclick = () => { editingId = null; renderLedger(); };
+      row.appendChild(cancel);
 
-    const share = document.createElement("button");
-    share.textContent = "share ↗";
-    share.onclick = async () => {
-      const payload = (e.tag ? `#${e.tag} — ` : "") + e.text + (e.chatUrl ? `\n${e.chatUrl}` : "");
-      if (navigator.share) {
-        try { await navigator.share({ title: "Margin idea", text: payload }); } catch (err) { /* user cancelled */ }
+      form.appendChild(row);
+      d.appendChild(form);
+    } else {
+      const txt = document.createElement("div");
+      txt.className = "text";
+      txt.textContent = e.text;
+      d.appendChild(txt);
+
+      const ops = document.createElement("div");
+      ops.className = "ops";
+
+      const edit = document.createElement("button");
+      edit.textContent = "edit";
+      edit.onclick = () => { editingId = e.id; renderLedger(); };
+      ops.appendChild(edit);
+
+      if (e.chatUrl) {
+        const a = document.createElement("a");
+        a.className = "chat"; a.href = e.chatUrl; a.target = "_blank";
+        a.textContent = "open chat ↗";
+        ops.appendChild(a);
       } else {
-        await navigator.clipboard.writeText(payload);
-        toast("copied — paste it anywhere");
+        const link = document.createElement("button");
+        link.textContent = "attach chat link";
+        link.onclick = () => {
+          const u = prompt("Paste the chat URL for this idea:");
+          if (u) { e.chatUrl = u.trim(); saveEntries(); renderLedger(); }
+        };
+        ops.appendChild(link);
       }
-    };
-    ops.appendChild(share);
 
-    const del = document.createElement("button");
-    del.textContent = "remove";
-    del.onclick = () => {
-      entries = entries.filter(x => x.id !== e.id);
-      saveEntries(); renderLedger();
-    };
-    ops.appendChild(del);
+      const resend = document.createElement("button");
+      resend.textContent = "send again";
+      resend.onclick = () => {
+        const tmpl = CONFIG.TAGS[e.tag] ? CONFIG.TAGS[e.tag].template : "{idea}";
+        const url = CONFIG.AGENTS[agentSelect.value]
+          .replaceAll("{q}", encodeURIComponent(tmpl.replaceAll("{idea}", e.text)));
+        window.open(url, "_blank");
+      };
+      ops.appendChild(resend);
 
-    d.appendChild(ops);
+      const share = document.createElement("button");
+      share.textContent = "share ↗";
+      share.onclick = async () => {
+        const payload = (e.tag ? `#${e.tag} — ` : "") + e.text + (e.chatUrl ? `\n${e.chatUrl}` : "");
+        if (navigator.share) {
+          try { await navigator.share({ title: "Margin idea", text: payload }); } catch (err) { /* user cancelled */ }
+        } else {
+          await navigator.clipboard.writeText(payload);
+          toast("copied — paste it anywhere");
+        }
+      };
+      ops.appendChild(share);
+
+      const del = document.createElement("button");
+      del.textContent = "remove";
+      del.onclick = () => {
+        entries = entries.filter(x => x.id !== e.id);
+        saveEntries(); renderLedger();
+      };
+      ops.appendChild(del);
+
+      d.appendChild(ops);
+    }
 
     if (e.image) {
       const img = document.createElement("img");
@@ -885,7 +976,37 @@ $("importBtn").onclick = () => {
    Service worker — offline shell + installability
    ===================================================================== */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
+  const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js").catch(() => {});
+
+  // Only an *existing* app taking a new controller counts as an update —
+  // a fresh install also fires controllerchange, and that's not a re-open.
+  let noticeChecked = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || noticeChecked) return;
+    noticeChecked = true;
+    checkForUpdateNotice();
+  });
+}
+
+async function checkForUpdateNotice() {
+  try {
+    const res = await fetch("version.json", { cache: "no-store" });
+    const data = await res.json();
+    if (!data || !data.message || !data.version) return;
+    if (localStorage.getItem("margin.seenUpdate.v1") === data.version) return;
+    const banner = $("updateBanner");
+    $("updateBannerMsg").textContent = data.message;
+    banner.hidden = false;
+    $("updateRefresh").onclick = () => {
+      localStorage.setItem("margin.seenUpdate.v1", data.version);
+      location.reload();
+    };
+    $("updateDismiss").onclick = () => {
+      localStorage.setItem("margin.seenUpdate.v1", data.version);
+      banner.hidden = true;
+    };
+  } catch (e) {}
 }
 
 /* Cmd/Ctrl+Enter sends */

@@ -976,18 +976,17 @@ $("importBtn").onclick = () => {
    Service worker — offline shell + installability
    ===================================================================== */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
-  const hadController = !!navigator.serviceWorker.controller;
-  navigator.serviceWorker.register("sw.js").catch(() => {});
-
-  // Only an *existing* app taking a new controller counts as an update —
-  // a fresh install also fires controllerchange, and that's not a re-open.
-  let noticeChecked = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (!hadController || noticeChecked) return;
-    noticeChecked = true;
-    checkForUpdateNotice();
-  });
+  // updateViaCache: "none" keeps GitHub Pages' Cache-Control on sw.js from
+  // delaying the browser's own byte-diff update check.
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+    .then(reg => reg.update().catch(() => {}))
+    .catch(() => {});
 }
+
+/* Update notice: checked on every load (not tied to the service-worker
+   lifecycle, which is too unreliable/throttled to gate a "new version"
+   banner on — this just compares version.json to what we last showed). */
+checkForUpdateNotice();
 
 async function checkForUpdateNotice() {
   try {

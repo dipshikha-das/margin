@@ -1,6 +1,6 @@
 /* Margin service worker — cache the app shell so it opens offline.
    Bump CACHE_VERSION whenever index.html changes, so installed phones update. */
-const CACHE_VERSION = "margin-v1.11.1";
+const CACHE_VERSION = "margin-v1.12.0";
 const SHELL = [
   "./",
   "./index.html",

@@ -290,22 +290,39 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  .update-banner {
-    position: sticky; top: 0; z-index: 60;
-    display: flex; align-items: center; gap: 12px;
-    background: var(--margin); color: #FFF9F2;
-    padding: 10px 16px; font-family: 'DM Mono', monospace; font-size: 12.5px; letter-spacing: .02em;
+  .update-bell-wrap { position: relative; }
+  .update-bell {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid var(--rule); background: transparent; color: var(--pencil);
+    font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+    position: relative;
   }
-  .update-banner[hidden] { display: none; }
-  .update-banner .msg { flex: 1; line-height: 1.4; }
-  .update-banner button {
+  .update-bell:hover { color: var(--margin); border-color: var(--margin); }
+  .update-bell[hidden] { display: none; }
+  .update-bell .dot {
+    position: absolute; top: -2px; right: -2px; width: 9px; height: 9px;
+    border-radius: 50%; background: var(--wordmark); border: 1.5px solid var(--paper);
+  }
+
+  .update-panel {
+    position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
+    width: 240px; background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(43,38,32,.18);
+    padding: 14px; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: .02em;
+  }
+  .update-panel[hidden] { display: none; }
+  .update-panel .msg { line-height: 1.5; margin-bottom: 12px; }
+  .update-panel .row { display: flex; gap: 8px; justify-content: flex-end; }
+  .update-panel button {
     font-family: 'DM Mono', monospace; font-size: 11.5px; letter-spacing: .04em; cursor: pointer;
-    border-radius: 6px; padding: 6px 12px; white-space: nowrap;
+    border-radius: 6px; padding: 6px 12px; white-space: nowrap; border: 1px solid var(--rule);
+    background: transparent; color: var(--pencil);
   }
-  .update-banner .refresh { background: #FFF9F2; border: 1px solid #FFF9F2; color: var(--margin); }
-  .update-banner .refresh:hover { opacity: .9; }
-  .update-banner .dismiss { background: none; border: none; color: #FFF9F2; opacity: .8; padding: 6px 4px; }
-  .update-banner .dismiss:hover { opacity: 1; }
+  .update-panel .refresh { background: var(--margin); border-color: var(--margin); color: #FFF9F2; }
+  .update-panel .refresh:hover { opacity: .9; }
+  .update-panel .dismiss:hover { color: var(--ink); border-color: var(--pencil); }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
@@ -324,12 +341,6 @@
 <body>
 <div class="wrap">
 
-  <div class="update-banner" id="updateBanner" hidden role="status">
-    <span class="msg" id="updateBannerMsg"></span>
-    <button class="refresh" id="updateRefresh">refresh</button>
-    <button class="dismiss" id="updateDismiss" aria-label="dismiss">✕</button>
-  </div>
-
   <header>
     <div class="brand">
       <span class="logo-m" aria-hidden="true">M</span>
@@ -337,6 +348,18 @@
     </div>
     <div class="header-right">
       <span class="date" id="today"></span>
+      <div class="update-bell-wrap">
+        <button id="updateBell" class="update-bell" hidden aria-label="Update available" title="Update available">
+          🔔<span class="dot" aria-hidden="true"></span>
+        </button>
+        <div class="update-panel" id="updatePanel" hidden role="status">
+          <div class="msg" id="updatePanelMsg"></div>
+          <div class="row">
+            <button class="dismiss" id="updateDismiss">dismiss</button>
+            <button class="refresh" id="updateRefresh">refresh</button>
+          </div>
+        </div>
+      </div>
       <button id="menuBtn" class="menu-btn" aria-label="Open full ledger" title="Full ledger">☰</button>
     </div>
   </header>
@@ -983,9 +1006,9 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
     .catch(() => {});
 }
 
-/* Update notice: checked on every load (not tied to the service-worker
-   lifecycle, which is too unreliable/throttled to gate a "new version"
-   banner on — this just compares version.json to what we last showed). */
+/* Update notice: a quiet bell instead of a popup, so it doesn't depend on
+   catching the app at the right moment — it just sits in the header until
+   dismissed or taken, checked fresh on every load. */
 checkForUpdateNotice();
 
 async function checkForUpdateNotice() {
@@ -994,16 +1017,24 @@ async function checkForUpdateNotice() {
     const data = await res.json();
     if (!data || !data.message || !data.version) return;
     if (localStorage.getItem("margin.seenUpdate.v1") === data.version) return;
-    const banner = $("updateBanner");
-    $("updateBannerMsg").textContent = data.message;
-    banner.hidden = false;
+
+    const bell = $("updateBell");
+    const panel = $("updatePanel");
+    $("updatePanelMsg").textContent = data.message;
+    bell.hidden = false;
+
+    bell.onclick = () => { panel.hidden = !panel.hidden; };
+    document.addEventListener("click", (e) => {
+      if (!panel.hidden && !e.target.closest(".update-bell-wrap")) panel.hidden = true;
+    });
     $("updateRefresh").onclick = () => {
       localStorage.setItem("margin.seenUpdate.v1", data.version);
       location.reload();
     };
     $("updateDismiss").onclick = () => {
       localStorage.setItem("margin.seenUpdate.v1", data.version);
-      banner.hidden = true;
+      panel.hidden = true;
+      bell.hidden = true;
     };
   } catch (e) {}
 }
